@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <title>SPI語句4択</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+      background: #f5f7fb;
+      color: #111827;
+    }
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 18px 16px 34px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0;
+    }
+    .pill {
+      background: #e0ecff;
+      color: #1d4ed8;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .card {
+      background: white;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, .08);
+      margin-top: 12px;
+    }
+    .progress {
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 12px 0 20px;
+    }
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: #2563eb;
+      transition: width .25s;
+    }
+    .meta {
+      font-size: 14px;
+      color: #6b7280;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+    .word {
+      text-align: center;
+      margin: 20px 0 8px;
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+    .reading {
+      text-align: center;
+      font-size: 18px;
+      color: #64748b;
+      margin-bottom: 22px;
+      font-weight: 700;
+    }
+    .choices {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    button {
+      font: inherit;
+      border: 0;
+      border-radius: 16px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .choice {
+      width: 100%;
+      text-align: left;
+      padding: 16px 16px;
+      background: #f8fafc;
+      border: 2px solid #e5e7eb;
+      font-weight: 700;
+      line-height: 1.5;
+      min-height: 64px;
+    }
+    .choice:active { transform: scale(.99); }
+    .choice.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .choice.wrong {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .feedback {
+      min-height: 30px;
+      margin-top: 14px;
+      font-weight: 900;
+      text-align: center;
+      font-size: 18px;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .primary {
+      background: #2563eb;
+      color: white;
+      padding: 15px;
+      font-weight: 900;
+    }
+    .secondary {
+      background: #e5e7eb;
+      color: #111827;
+      padding: 15px;
+      font-weight: 900;
+    }
+    .small {
+      font-size: 13px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 14px;
+      line-height: 1.6;
+    }
+    .hidden { display: none; }
+    .result-number {
+      font-size: 54px;
+      font-weight: 900;
+      text-align: center;
+      margin: 12px 0;
+    }
+    .review-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .review-item {
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 12px;
+      line-height: 1.5;
+    }
+    .review-item b { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>🎯 SPI語句4択</h1>
+      <div class="pill" id="scorePill">0 / 0</div>
+    </header>
+
+    <section class="card" id="quizCard">
+      <div class="meta">
+        <span id="qNo">第1問</span>
+        <span id="totalNo">全問</span>
+      </div>
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <div class="word" id="word">語句</div>
+      <div class="reading" id="reading">よみ</div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="actions">
+        <button class="secondary" id="restartBtn">最初から</button>
+        <button class="primary" id="nextBtn">次へ</button>
+      </div>
+      <p class="small">語句に合う意味を4択から選んでください。現在148語を収録しています。</p>
+    </section>
+
+    <section class="card hidden" id="resultCard">
+      <h2 style="text-align:center;margin:0;">結果</h2>
+      <div class="result-number" id="resultText">0%</div>
+      <p style="text-align:center;font-weight:800;" id="resultSub"></p>
+      <div class="actions">
+        <button class="secondary" id="reviewBtn">間違いだけ復習</button>
+        <button class="primary" id="againBtn">もう一度</button>
+      </div>
+      <div class="review-list" id="reviewList"></div>
+    </section>
+  </main>
+
+<script>
+const WORDS = [
+  {
+    "word": "あげつらう",
+    "reading": "",
+    "meaning": "物事のよしあしについて論じ合う、欠点をことさらに言い立てる"
+  },
+  {
+    "word": "あまつさえ",
+    "reading": "",
+    "meaning": "それどころではなく"
+  },
+  {
+    "word": "いみじくも",
+    "reading": "",
+    "meaning": "適切に。巧みにも"
+  },
+  {
+    "word": "おしなべて",
+    "reading": "",
+    "meaning": "全て一様に"
+  },
+  {
+    "word": "おずおず",
+    "reading": "",
+    "meaning": "おそれためらいながら行動するさま"
+  },
+  {
+    "word": "かいがいしい",
+    "reading": "",
+    "meaning": "動作がきびきびしていて、手ぎわがよいこと"
+  },
+  {
+    "word": "ことほぐ",
+    "reading": "",
+    "meaning": "言葉で祝福する"
+  },
+  {
+    "word": "すいたらしい",
+    "reading": "",
+    "meaning": "なんとなく好ましい、感じが良いこと"
+  },
+  {
+    "word": "ぞんざい",
+    "reading": "",
+    "meaning": "物事をいい加減にすること。投げやりなさま"
+  },
+  {
+    "word": "たゆたう",
+    "reading": "",
+    "meaning": "ゆらゆらと揺れ動いて定まらない"
+  },
+  {
+    "word": "つぶさに",
+    "reading": "",
+    "meaning": "細かく"
+  },
+  {
+    "word": "一瞥",
+    "reading": "いちべつ",
+    "meaning": "ちらっと見ること、ちょっとだけ見ること"
+  },
+  {
+    "word": "不憫",
+    "reading": "ふびん",
+    "meaning": "かわいそうで哀れむべきこと"
+  },
+  {
+    "word": "不解",
+    "reading": "ふかい",
+    "meaning": "急らず努力すること"
+  },
+  {
+    "word": "予見",
+    "reading": "よけん",
+    "meaning": "事が起こる前にあらかじめ知ること"
+  },
+  {
+    "word": "付合",
+    "reading": "ふごう",
+    "meaning": "完全に一致すること"
+  },
+  {
+    "word": "伍する",
+    "reading": "ごする",
+    "meaning": "他者と同等の位置にある。肩をならべる"
+  },
+  {
+    "word": "会得",
+    "reading": "えとく",
+    "meaning": "物事の意味、本質などを理解し、悟ること"
+  },
+  {
+    "word": "伝播",
+    "reading": "でんぱ",
+    "meaning": "広く伝わること"
+  },
+  {
+    "word": "佳境",
+    "reading": "かきょう",
+    "meaning": "興味深い場面。おもしろい所"
+  },
+  {
+    "word": "傀儡",
+    "reading": "かいらい",
+    "meaning": "操り人形。人の手先で使われること"
+  },
+  {
+    "word": "僭越",
+    "reading": "せんえつ",
+    "meaning": "自分の地位や立場を越えて出過ぎたことをすること"
+  },
+  {
+    "word": "克明",
+    "reading": "こくめい",
+    "meaning": "細かいところまで念を入れて手落ちのないこと、まじめで正直なこと"
+  },
+  {
+    "word": "公明正大",
+    "reading": "こうめいせいだい",
+    "meaning": "心がはっきりして、やましいことのないこと"
+  },
+  {
+    "word": "公算",
+    "reading": "こうさん",
+    "meaning": "あることが将来起こる見込み"
+  },
+  {
+    "word": "再三",
+    "reading": "さいさん",
+    "meaning": "度々、何度も"
+  },
+  {
+    "word": "凋落",
+    "reading": "ちょうらく",
+    "meaning": "衰えること、落ちぶれること"
+  },
+  {
+    "word": "凱旋",
+    "reading": "がいせん",
+    "meaning": "戦いに勝って意気揚々と帰ること"
+  },
+  {
+    "word": "出色",
+    "reading": "しゅっしょく",
+    "meaning": "他より特に優れていること"
+  },
+  {
+    "word": "刻銘",
+    "reading": "こくめい",
+    "meaning": "石碑などに刻まれた文字"
+  },
+  {
+    "word": "励行",
+    "reading": "れいこう",
+    "meaning": "努力して実行すること"
+  },
+  {
+    "word": "卑近",
+    "reading": "ひきん",
+    "meaning": "身近でありふれていること"
+  },
+  {
+    "word": "協議",
+    "reading": "きょうぎ",
+    "meaning": "集まって相談すること"
+  },
+  {
+    "word": "参画",
+    "reading": "さんかく",
+    "meaning": "企てや事業の計画に加わること"
+  },
+  {
+    "word": "反目",
+    "reading": "はんもく",
+    "meaning": "仲が悪く、対立すること。にらみ合いの状態にあること"
+  },
+  {
+    "word": "収斂",
+    "reading": "しゅうれん",
+    "meaning": "縮むこと、一つにまとまること"
+  },
+  {
+    "word": "吐露",
+    "reading": "とろ",
+    "meaning": "心の中を包み隠さずに打ち明けること"
+  },
+  {
+    "word": "吹聴",
+    "reading": "ふいちょう",
+    "meaning": "言いふらすこと、言い広めること"
+  },
+  {
+    "word": "呵責",
+    "reading": "かしゃく",
+    "meaning": "厳しくとがめて叱ること。叱り責める"
+  },
+  {
+    "word": "咀嚼",
+    "reading": "そしゃく",
+    "meaning": "内容をよく考え、十分に理解し味わうこと"
+  },
+  {
+    "word": "哄笑",
+    "reading": "こうしょう",
+    "meaning": "瞬間的な判断や行動"
+  },
+  {
+    "word": "営々",
+    "reading": "えいえい",
+    "meaning": "せっせと一生懸命に働くさま"
+  },
+  {
+    "word": "嗚咽",
+    "reading": "おえつ",
+    "meaning": "声を押し殺して泣くこと"
+  },
+  {
+    "word": "困憊",
+    "reading": "こんぱい",
+    "meaning": "苦しいこと続きに疲れ果てること"
+  },
+  {
+    "word": "在野",
+    "reading": "ざいや",
+    "meaning": "民間の人"
+  },
+  {
+    "word": "垂涎",
+    "reading": "すいぜん",
+    "meaning": "あるものを手に入れたいと熱望すること"
+  },
+  {
+    "word": "変節",
+    "reading": "へんせつ",
+    "meaning": "それまでの主義や信念を変えること"
+  },
+  {
+    "word": "大綱",
+    "reading": "おおづな",
+    "meaning": "ある事柄の根本となるもの、大づかみにとらえた内容"
+  },
+  {
+    "word": "奔流",
+    "reading": "ほんりゅう",
+    "meaning": "勢いの激しい流れ"
+  },
+  {
+    "word": "如実",
+    "reading": "にょじつ",
+    "meaning": "実際の通り"
+  },
+  {
+    "word": "委細",
+    "reading": "いさい",
+    "meaning": "詳しいこと"
+  },
+  {
+    "word": "宥和",
+    "reading": "ゆうわ",
+    "meaning": "対立する相手を寛大に扱って、仲よくすること"
+  },
+  {
+    "word": "宦官",
+    "reading": "かんがん",
+    "meaning": "古代中国で、去勢され宮中で働いた官吏"
+  },
+  {
+    "word": "寡聞",
+    "reading": "かぶん",
+    "meaning": "知識や経験が少ないこと"
+  },
+  {
+    "word": "専横",
+    "reading": "せんおう",
+    "meaning": "わがままで横暴な振る舞い"
+  },
+  {
+    "word": "尊大",
+    "reading": "そんだい",
+    "meaning": "人を見下したような偉そうな態度をとること"
+  },
+  {
+    "word": "度量",
+    "reading": "どりょう",
+    "meaning": "心の広さ"
+  },
+  {
+    "word": "恣意",
+    "reading": "しい",
+    "meaning": "自分の思うまま、思いついたままの考え"
+  },
+  {
+    "word": "感服",
+    "reading": "かんぷく",
+    "meaning": "深く感心して尊敬の気持ちを抱くこと"
+  },
+  {
+    "word": "憐憫",
+    "reading": "れんびん",
+    "meaning": "不憫に思うこと、哀れみの気持ち"
+  },
+  {
+    "word": "懐柔",
+    "reading": "かいじゅう",
+    "meaning": "相手を手なずけるなどして、自分の思い通りに事を運ぶこと"
+  },
+  {
+    "word": "懸案",
+    "reading": "けんあん",
+    "meaning": "長らく解決しないままとなっていた問題"
+  },
+  {
+    "word": "折半",
+    "reading": "せっぱん",
+    "meaning": "二等分すること"
+  },
+  {
+    "word": "折衷",
+    "reading": "せっちゅう",
+    "meaning": "それぞれにいいところがあって一つに合わせること"
+  },
+  {
+    "word": "押し並べて",
+    "reading": "おしなべて",
+    "meaning": "全体にわたって、全て一様に"
+  },
+  {
+    "word": "担勇",
+    "reading": "たんゆう",
+    "meaning": "ものに動じない勇気があること"
+  },
+  {
+    "word": "拝眉",
+    "reading": "はいび",
+    "meaning": "人に会うこと"
+  },
+  {
+    "word": "拮抗",
+    "reading": "きっこう",
+    "meaning": "力が等しく張り合うこと"
+  },
+  {
+    "word": "推敲",
+    "reading": "すいこう",
+    "meaning": "詩文の字句や文章を十分に吟味して練りなおすこと"
+  },
+  {
+    "word": "揮毫",
+    "reading": "きごう",
+    "meaning": "書くのをやめること"
+  },
+  {
+    "word": "擬態",
+    "reading": "ぎたい",
+    "meaning": "他のものに似せた形をとること"
+  },
+  {
+    "word": "敢行",
+    "reading": "かんこう",
+    "meaning": "困難を押し切って実行すること"
+  },
+  {
+    "word": "敷延",
+    "reading": "ふえん",
+    "meaning": "例を挙げて詳しく説明すること"
+  },
+  {
+    "word": "斡旋",
+    "reading": "あっせん",
+    "meaning": "間に入って双方をうまく取りもつこと"
+  },
+  {
+    "word": "断腸",
+    "reading": "だんちょう",
+    "meaning": "腹わたがちぎれるほど、非常に悲しいこと"
+  },
+  {
+    "word": "斯界",
+    "reading": "しかい",
+    "meaning": "この分野"
+  },
+  {
+    "word": "早晩",
+    "reading": "そうばん",
+    "meaning": "遅かれ早かれ"
+  },
+  {
+    "word": "明け透け",
+    "reading": "あけすけ",
+    "meaning": "隠すことなく、包み隠しの無いこと。露骨"
+  },
+  {
+    "word": "明察",
+    "reading": "めいさつ",
+    "meaning": "物事を見抜くこと"
+  },
+  {
+    "word": "星霜",
+    "reading": "せいそう",
+    "meaning": "年月"
+  },
+  {
+    "word": "暁通",
+    "reading": "ぎょうつう",
+    "meaning": "すみずみまで知り尽くしていること"
+  },
+  {
+    "word": "暫時",
+    "reading": "ざんじ",
+    "meaning": "しばらく"
+  },
+  {
+    "word": "更迭",
+    "reading": "こうてつ",
+    "meaning": "職や地位についている人を替えること"
+  },
+  {
+    "word": "本懐を遂げる",
+    "reading": "ほんかいをとげる",
+    "meaning": "もともとの夢を達成すること"
+  },
+  {
+    "word": "桎梏",
+    "reading": "しっこく",
+    "meaning": "人の行動を厳しく制限して自由を束縛するもの"
+  },
+  {
+    "word": "概括",
+    "reading": "がいかつ",
+    "meaning": "大まかにまとめること"
+  },
+  {
+    "word": "標榜",
+    "reading": "ひょうぼう",
+    "meaning": "主義・主張などを公然に表すこと"
+  },
+  {
+    "word": "機知",
+    "reading": "きち",
+    "meaning": "その場に応じて、とっさに適切な発言ができるような鋭い知恵"
+  },
+  {
+    "word": "殊勝",
+    "reading": "しゅしょう",
+    "meaning": "心がけや行動が感心なさま、けなげ"
+  },
+  {
+    "word": "毅然",
+    "reading": "きぜん",
+    "meaning": "意志や信念をつよぬき、物事に動じないさま"
+  },
+  {
+    "word": "比肩",
+    "reading": "ひけん",
+    "meaning": "肩を並べること、同等なこと"
+  },
+  {
+    "word": "気丈",
+    "reading": "きじょう",
+    "meaning": "心や気持ちがしっかりしていること"
+  },
+  {
+    "word": "気概",
+    "reading": "きがい",
+    "meaning": "困難にくじけない強い意志・気性"
+  },
+  {
+    "word": "気鋭",
+    "reading": "きえい",
+    "meaning": "意気込みが鋭いこと"
+  },
+  {
+    "word": "汗顔",
+    "reading": "かんがん",
+    "meaning": "大いに恥じること"
+  },
+  {
+    "word": "沿革",
+    "reading": "えんかく",
+    "meaning": "物事の移り変わり"
+  },
+  {
+    "word": "法外",
+    "reading": "ほうがい",
+    "meaning": "普通の程度を超えていること"
+  },
+  {
+    "word": "泰然",
+    "reading": "たいぜん",
+    "meaning": "落ち着いていて物事に驚かないさま"
+  },
+  {
+    "word": "流布",
+    "reading": "るふ",
+    "meaning": "世間に広まること"
+  },
+  {
+    "word": "流転",
+    "reading": "るてん",
+    "meaning": "絶えず移り変わること"
+  },
+  {
+    "word": "消長",
+    "reading": "しょうちょう",
+    "meaning": "物事が衰えて消えるか伸びて盛んになるかの成り行き"
+  },
+  {
+    "word": "淳朴",
+    "reading": "じゅんぼく",
+    "meaning": "素朴で飾り気がないこと"
+  },
+  {
+    "word": "溜飲",
+    "reading": "りゅういん",
+    "meaning": "胸のつかえが下りること"
+  },
+  {
+    "word": "漸次",
+    "reading": "ぜんじ",
+    "meaning": "次第に、だんだん"
+  },
+  {
+    "word": "漸進",
+    "reading": "ぜんしん",
+    "meaning": "順を追ってだんだんに進むこと、段々と進化すること"
+  },
+  {
+    "word": "潮時",
+    "reading": "しおどき",
+    "meaning": "ちょうどよいタイミング"
+  },
+  {
+    "word": "焦燥",
+    "reading": "しょうそう",
+    "meaning": "いらだち、焦ること"
+  },
+  {
+    "word": "焦眉",
+    "reading": "しょうび",
+    "meaning": "火が迫るように、危難が迫ること"
+  },
+  {
+    "word": "照準",
+    "reading": "しょうじゅん",
+    "meaning": "狙いを定めること"
+  },
+  {
+    "word": "煩瑣",
+    "reading": "はんさ",
+    "meaning": "こまごまとしてわずらわしいこと"
+  },
+  {
+    "word": "狼狽",
+    "reading": "ろうばい",
+    "meaning": "慌てふためくこと"
+  },
+  {
+    "word": "猜疑",
+    "reading": "さいぎ",
+    "meaning": "ねたみ疑うこと"
+  },
+  {
+    "word": "猶予",
+    "reading": "ゆうよ",
+    "meaning": "実行の期限を伸ばすこと"
+  },
+  {
+    "word": "獰悪",
+    "reading": "どうあく",
+    "meaning": "性質が乱暴で荒っぽいこと、凶悪"
+  },
+  {
+    "word": "現",
+    "reading": "うつつ",
+    "meaning": "この世に現に存在しているもの。現実"
+  },
+  {
+    "word": "瓦解",
+    "reading": "がかい",
+    "meaning": "組織的な物事の一部分が壊れて、それによって全体がこわれること"
+  },
+  {
+    "word": "甘受",
+    "reading": "かんじゅ",
+    "meaning": "甘んじて受けること"
+  },
+  {
+    "word": "生粋",
+    "reading": "きっすい",
+    "meaning": "純粋で混じり気のないこと"
+  },
+  {
+    "word": "甲斐甲斐しい",
+    "reading": "かいがいしい",
+    "meaning": "動作がきびきびしていて、手ぎわがよいさま"
+  },
+  {
+    "word": "登庸",
+    "reading": "とうよう",
+    "meaning": "人を官職などに登用すること"
+  },
+  {
+    "word": "端緒",
+    "reading": "たんしょ",
+    "meaning": "物事の始まり、手がかり"
+  },
+  {
+    "word": "符号",
+    "reading": "ふごう",
+    "meaning": "ある情報を伝達するために体系的に使われる記号"
+  },
+  {
+    "word": "籠絡",
+    "reading": "ろうらく",
+    "meaning": "巧みに手なずけて、自分の思いどおりに操ること"
+  },
+  {
+    "word": "粉飾",
+    "reading": "ふんしょく",
+    "meaning": "うわべを取りつくろって立派に見せかけること"
+  },
+  {
+    "word": "粗忽",
+    "reading": "そこつ",
+    "meaning": "軽はずみなこと、不注意なために引き起こしたあやまち"
+  },
+  {
+    "word": "老成",
+    "reading": "ろうせい",
+    "meaning": "経験を積んで熟達すること"
+  },
+  {
+    "word": "肝要",
+    "reading": "かんよう",
+    "meaning": "非常に大切なこと、最も必要なこと"
+  },
+  {
+    "word": "腐心",
+    "reading": "ふしん",
+    "meaning": "心を悩ますこと、ひどく心を使うこと"
+  },
+  {
+    "word": "至言",
+    "reading": "しげん",
+    "meaning": "事物の本質を適切に言い当てている言葉"
+  },
+  {
+    "word": "英断",
+    "reading": "えいだん",
+    "meaning": "きっぱりと事を決めること、すぐれた決断"
+  },
+  {
+    "word": "薫陶",
+    "reading": "くんとう",
+    "meaning": "徳の力で人を感化し、教育すること"
+  },
+  {
+    "word": "言質",
+    "reading": "げんち",
+    "meaning": "あとで証拠となる約束の言葉"
+  },
+  {
+    "word": "詭弁",
+    "reading": "きべん",
+    "meaning": "道理に合わないことを強引に正当化しようとする弁論"
+  },
+  {
+    "word": "識見",
+    "reading": "しきけん",
+    "meaning": "物事に正しい判断を下す力、優れた意見"
+  },
+  {
+    "word": "趨勢",
+    "reading": "すうせい",
+    "meaning": "ある方向へと動く勢い、社会の全体の流れ"
+  },
+  {
+    "word": "軋轢",
+    "reading": "あつれき",
+    "meaning": "仲が悪くなること"
+  },
+  {
+    "word": "迎合",
+    "reading": "げいごう",
+    "meaning": "自分の考えを曲げても、他人の意に従って気に入られるようにすること"
+  },
+  {
+    "word": "造詣",
+    "reading": "ぞうけい",
+    "meaning": "どの分野に関しての知識や優れた技量"
+  },
+  {
+    "word": "逡巡",
+    "reading": "しゅんじゅん",
+    "meaning": "決断できずにぐずぐずすること"
+  },
+  {
+    "word": "進取",
+    "reading": "しんしゅ",
+    "meaning": "みずから進んで物事に取り組むこと"
+  },
+  {
+    "word": "進言",
+    "reading": "しんげん",
+    "meaning": "上の者に意見を申し述べること"
+  },
+  {
+    "word": "遁走",
+    "reading": "とんそう",
+    "meaning": "逃げ出すこと、逃げ去ること"
+  },
+  {
+    "word": "適宜",
+    "reading": "てきぎ",
+    "meaning": "状況によく合っていること、便宜に従うこと"
+  },
+  {
+    "word": "重畳",
+    "reading": "ちょうじょう",
+    "meaning": "大変喜ばしいこと、良いことが重なること"
+  },
+  {
+    "word": "闊達",
+    "reading": "かったつ",
+    "meaning": "度量が広く、小事にこだわらないさま"
+  },
+  {
+    "word": "頓挫",
+    "reading": "とんざ",
+    "meaning": "勢いが急に弱まること、計画などが途中で遂行できなくなること"
+  },
+  {
+    "word": "鳥瞰",
+    "reading": "ちょうかん",
+    "meaning": "全体を一目で観察すること、高いところから広い範囲を見ること"
+  },
+  {
+    "word": "齟齬",
+    "reading": "そご",
+    "meaning": "物事がうまくかみ合わないこと、食い違うこと"
+  }
+];
+
+let questions = [];
+let index = 0;
+let correctCount = 0;
+let answered = false;
+let missed = [];
+
+const wordEl = document.getElementById("word");
+const readingEl = document.getElementById("reading");
+const choicesEl = document.getElementById("choices");
+const feedbackEl = document.getElementById("feedback");
+const qNoEl = document.getElementById("qNo");
+const totalNoEl = document.getElementById("totalNo");
+const scorePill = document.getElementById("scorePill");
+const bar = document.getElementById("bar");
+const nextBtn = document.getElementById("nextBtn");
+const restartBtn = document.getElementById("restartBtn");
+const quizCard = document.getElementById("quizCard");
+const resultCard = document.getElementById("resultCard");
+const resultText = document.getElementById("resultText");
+const resultSub = document.getElementById("resultSub");
+const reviewList = document.getElementById("reviewList");
+
+function shuffle(array) {
+  const a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function makeQuestions(source = WORDS) {
+  questions = shuffle(source);
+  index = 0;
+  correctCount = 0;
+  missed = [];
+  answered = false;
+  quizCard.classList.remove("hidden");
+  resultCard.classList.add("hidden");
+  showQuestion();
+}
+
+function showQuestion() {
+  answered = false;
+  feedbackEl.textContent = "";
+  const q = questions[index];
+  wordEl.textContent = q.word;
+  readingEl.textContent = q.reading;
+  qNoEl.textContent = `第${index + 1}問`;
+  totalNoEl.textContent = `全${questions.length}問`;
+  scorePill.textContent = `${correctCount} / ${index}`;
+  bar.style.width = `${(index / questions.length) * 100}%`;
+
+  const wrongs = shuffle(WORDS.filter(w => w.meaning !== q.meaning)).slice(0, 3);
+  const options = shuffle([q, ...wrongs]);
+  choicesEl.innerHTML = "";
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = opt.meaning;
+    btn.onclick = () => answer(btn, opt.meaning === q.meaning);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function answer(btn, isCorrect) {
+  if (answered) return;
+  answered = true;
+  const q = questions[index];
+  const buttons = [...document.querySelectorAll(".choice")];
+  buttons.forEach(b => {
+    if (b.textContent === q.meaning) b.classList.add("correct");
+  });
+  if (isCorrect) {
+    correctCount++;
+    feedbackEl.textContent = "正解！";
+    feedbackEl.style.color = "#16a34a";
+  } else {
+    btn.classList.add("wrong");
+    missed.push(q);
+    feedbackEl.textContent = "不正解";
+    feedbackEl.style.color = "#dc2626";
+  }
+  scorePill.textContent = `${correctCount} / ${index + 1}`;
+}
+
+function nextQuestion() {
+  if (!answered) {
+    feedbackEl.textContent = "先に選択してください";
+    feedbackEl.style.color = "#6b7280";
+    return;
+  }
+  index++;
+  if (index >= questions.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showResult() {
+  quizCard.classList.add("hidden");
+  resultCard.classList.remove("hidden");
+  const percent = Math.round((correctCount / questions.length) * 100);
+  resultText.textContent = `${percent}%`;
+  resultSub.textContent = `${questions.length}問中 ${correctCount}問正解`;
+  bar.style.width = "100%";
+  reviewList.innerHTML = "";
+  if (missed.length === 0) {
+    reviewList.innerHTML = '<div class="review-item">全問正解です。</div>';
+  } else {
+    missed.forEach(w => {
+      const div = document.createElement("div");
+      div.className = "review-item";
+      div.innerHTML = `<b>${w.word}</b>（${w.reading}）<br>${w.meaning}`;
+      reviewList.appendChild(div);
+    });
+  }
+}
+
+nextBtn.onclick = nextQuestion;
+restartBtn.onclick = () => makeQuestions();
+document.getElementById("againBtn").onclick = () => makeQuestions();
+document.getElementById("reviewBtn").onclick = () => {
+  if (missed.length > 0) makeQuestions(missed);
+};
+makeQuestions();
+</script>
+</body>
+</html>

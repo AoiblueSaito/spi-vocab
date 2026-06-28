@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <title>SPI語句4択</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+      background: #f5f7fb;
+      color: #111827;
+    }
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 18px 16px 34px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0;
+    }
+    .pill {
+      background: #e0ecff;
+      color: #1d4ed8;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .card {
+      background: white;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, .08);
+      margin-top: 12px;
+    }
+    .progress {
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 12px 0 20px;
+    }
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: #2563eb;
+      transition: width .25s;
+    }
+    .meta {
+      font-size: 14px;
+      color: #6b7280;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+    .word {
+      text-align: center;
+      margin: 20px 0 8px;
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+    .reading {
+      text-align: center;
+      font-size: 18px;
+      color: #64748b;
+      margin-bottom: 22px;
+      font-weight: 700;
+    }
+    .choices {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    button {
+      font: inherit;
+      border: 0;
+      border-radius: 16px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .choice {
+      width: 100%;
+      text-align: left;
+      padding: 16px 16px;
+      background: #f8fafc;
+      border: 2px solid #e5e7eb;
+      font-weight: 700;
+      line-height: 1.5;
+      min-height: 64px;
+    }
+    .choice:active { transform: scale(.99); }
+    .choice.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .choice.wrong {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .feedback {
+      min-height: 30px;
+      margin-top: 14px;
+      font-weight: 900;
+      text-align: center;
+      font-size: 18px;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .primary {
+      background: #2563eb;
+      color: white;
+      padding: 15px;
+      font-weight: 900;
+    }
+    .secondary {
+      background: #e5e7eb;
+      color: #111827;
+      padding: 15px;
+      font-weight: 900;
+    }
+    .small {
+      font-size: 13px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 14px;
+      line-height: 1.6;
+    }
+    .hidden { display: none; }
+    .result-number {
+      font-size: 54px;
+      font-weight: 900;
+      text-align: center;
+      margin: 12px 0;
+    }
+    .review-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .review-item {
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 12px;
+      line-height: 1.5;
+    }
+    .review-item b { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>🎯 SPI語句4択</h1>
+      <div class="pill" id="scorePill">0 / 0</div>
+    </header>
+
+    <section class="card" id="quizCard">
+      <div class="meta">
+        <span id="qNo">第1問</span>
+        <span id="totalNo">全問</span>
+      </div>
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <div class="word" id="word">語句</div>
+      <div class="reading" id="reading">よみ</div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="actions">
+        <button class="secondary" id="restartBtn">最初から</button>
+        <button class="primary" id="nextBtn">次へ</button>
+      </div>
+      <p class="small">語句に合う意味を4択から選んでください。間違えた問題は最後に復習できます。</p>
+    </section>
+
+    <section class="card hidden" id="resultCard">
+      <h2 style="text-align:center;margin:0;">結果</h2>
+      <div class="result-number" id="resultText">0%</div>
+      <p style="text-align:center;font-weight:800;" id="resultSub"></p>
+      <div class="actions">
+        <button class="secondary" id="reviewBtn">間違いだけ復習</button>
+        <button class="primary" id="againBtn">もう一度</button>
+      </div>
+      <div class="review-list" id="reviewList"></div>
+    </section>
+  </main>
+
+<script>
+const WORDS = [{"word": "凋落", "reading": "ちょうらく", "meaning": "衰えること、落ちぶれること"}, {"word": "照準", "reading": "しょうじゅん", "meaning": "狙いを定めること"}, {"word": "消長", "reading": "しょうちょう", "meaning": "物事が衰えて消えるか伸びて盛んになるかの成り行き"}, {"word": "恣意", "reading": "しい", "meaning": "自分の思うまま、思いついたままの考え"}, {"word": "推敲", "reading": "すいこう", "meaning": "詩文の字句や文章を十分に吟味して練りなおすこと"}, {"word": "桎梏", "reading": "しっこく", "meaning": "人の行動を厳しく制限して自由を束縛するもの"}, {"word": "収斂", "reading": "しゅうれん", "meaning": "縮むこと、一つにまとまること"}, {"word": "籠絡", "reading": "ろうらく", "meaning": "巧みに手なずけて、自分の思いどおりに操ること"}, {"word": "端緒", "reading": "たんしょ", "meaning": "物事の始まり、手がかり"}, {"word": "闊達", "reading": "かったつ", "meaning": "度量が広く、小事にこだわらないさま"}, {"word": "卑近", "reading": "ひきん", "meaning": "身近でありふれていること"}, {"word": "伝播", "reading": "でんぱ", "meaning": "広く伝わること"}, {"word": "吹聴", "reading": "ふいちょう", "meaning": "言いふらすこと、言い広めること"}, {"word": "焦眉", "reading": "しょうび", "meaning": "危険が迫っていること、差し迫った状況にあること"}, {"word": "泰然", "reading": "たいぜん", "meaning": "落ち着いていて物事に驚かないさま"}, {"word": "斡旋", "reading": "あっせん", "meaning": "間に入って双方をうまく取り持つこと"}, {"word": "生粋", "reading": "きっすい", "meaning": "純粋で混じり気のないこと"}, {"word": "佳境", "reading": "かきょう", "meaning": "興味を感じさせる場面、景色のよい所"}, {"word": "斯界", "reading": "しかい", "meaning": "その道を専門とする社会"}, {"word": "粉飾", "reading": "ふんしょく", "meaning": "うわべを取りつくろって立派に見せかけること"}, {"word": "気概", "reading": "きがい", "meaning": "困難にくじけない強い意志・気性"}, {"word": "適宜", "reading": "てきぎ", "meaning": "状況によく合っていること、便宜に従うこと"}, {"word": "粗忽", "reading": "そこつ", "meaning": "軽はずみなこと、不注意なために引き起こしたあやまち"}, {"word": "頓挫", "reading": "とんざ", "meaning": "勢いが急に弱まること、計画などが途中で遂行できなくなること"}, {"word": "宥和", "reading": "ゆうわ", "meaning": "対立する相手を寛大に扱って、仲よくすること"}, {"word": "寡聞", "reading": "かぶん", "meaning": "見聞が狭く浅いこと"}, {"word": "僭越", "reading": "せんえつ", "meaning": "自分の地位や立場を越えて出過ぎたことをすること"}, {"word": "漸進", "reading": "ぜんしん", "meaning": "順を追ってだんだんに進むこと、段々と進化すること"}, {"word": "符号", "reading": "ふごう", "meaning": "ある情報を伝達するために体系的に使われる記号"}, {"word": "比肩", "reading": "ひけん", "meaning": "肩を並べること、同等なこと"}, {"word": "営々", "reading": "えいえい", "meaning": "せっせと休みなく励むこと"}, {"word": "重畳", "reading": "ちょうじょう", "meaning": "大変喜ばしいこと、良いことが重なること"}, {"word": "溜飲", "reading": "りゅういん", "meaning": "飲食物が胃にもどること、酸性の胃液がのどに上がってくること"}, {"word": "言質", "reading": "げんち", "meaning": "のちの証拠となる言葉"}, {"word": "気鋭", "reading": "きえい", "meaning": "気力があって、意気込みが鋭いこと"}, {"word": "腐心", "reading": "ふしん", "meaning": "心を悩ますこと、ひどく心を使うこと"}, {"word": "鳥瞰", "reading": "ちょうかん", "meaning": "全体を一目で観察すること、高いところから広い範囲を見ること"}, {"word": "肝要", "reading": "かんよう", "meaning": "非常に大切なこと、最も必要なこと"}, {"word": "協議", "reading": "きょうぎ", "meaning": "集まって相談すること"}, {"word": "専横", "reading": "せんおう", "meaning": "わがままで横暴な振舞い・態度"}, {"word": "遁走", "reading": "とんそう", "meaning": "逃げ出すこと、逃げ去ること"}, {"word": "暁通", "reading": "ぎょうつう", "meaning": "よく知っていること、精通していること"}, {"word": "軋轢", "reading": "あつれき", "meaning": "仲が悪くなること"}, {"word": "度量", "reading": "どりょう", "meaning": "心の広さ"}, {"word": "英断", "reading": "えいだん", "meaning": "きっぱりと事を決めること、すぐれた決断"}, {"word": "機知", "reading": "きち", "meaning": "その場に応じて、とっさに適切な発言ができるような鋭い知恵"}, {"word": "断腸", "reading": "だんちょう", "meaning": "はらわたがちぎれるほど、悲しいこと"}, {"word": "懐柔", "reading": "かいじゅう", "meaning": "相手を手なずけるなどして、自分の思い通りに事を運ぶこと"}, {"word": "至言", "reading": "しげん", "meaning": "事物の本質を適切に言い当てている言葉"}, {"word": "懸案", "reading": "けんあん", "meaning": "長らく解決しないままとなっていた問題"}, {"word": "一瞥", "reading": "いちべつ", "meaning": "ちらっと見ること、ちょっとだけ見ること"}, {"word": "進取", "reading": "しんしゅ", "meaning": "みずから進んで物事に取り組むこと"}, {"word": "薫陶", "reading": "くんとう", "meaning": "徳の力で人を感化し、教育すること"}, {"word": "委細", "reading": "いさい", "meaning": "細かく詳しいこと"}, {"word": "詭弁", "reading": "きべん", "meaning": "道理に合わないことを強引に正当化しようとする弁論"}, {"word": "克明", "reading": "こくめい", "meaning": "細かいところまで念を入れて手落ちのないこと、まじめで正直なこと"}, {"word": "大綱", "reading": "おおづな", "meaning": "ある事柄の根本となるもの、大づかみにとらえた内容"}, {"word": "齟齬", "reading": "そご", "meaning": "物事がうまくかみ合わないこと、食い違うこと"}];
+
+let questions = [];
+let index = 0;
+let correctCount = 0;
+let answered = false;
+let missed = [];
+
+const wordEl = document.getElementById("word");
+const readingEl = document.getElementById("reading");
+const choicesEl = document.getElementById("choices");
+const feedbackEl = document.getElementById("feedback");
+const qNoEl = document.getElementById("qNo");
+const totalNoEl = document.getElementById("totalNo");
+const scorePill = document.getElementById("scorePill");
+const bar = document.getElementById("bar");
+const nextBtn = document.getElementById("nextBtn");
+const restartBtn = document.getElementById("restartBtn");
+const quizCard = document.getElementById("quizCard");
+const resultCard = document.getElementById("resultCard");
+const resultText = document.getElementById("resultText");
+const resultSub = document.getElementById("resultSub");
+const reviewList = document.getElementById("reviewList");
+
+function shuffle(array) {
+  const a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function makeQuestions(source = WORDS) {
+  questions = shuffle(source);
+  index = 0;
+  correctCount = 0;
+  missed = [];
+  answered = false;
+  quizCard.classList.remove("hidden");
+  resultCard.classList.add("hidden");
+  showQuestion();
+}
+
+function showQuestion() {
+  answered = false;
+  feedbackEl.textContent = "";
+  const q = questions[index];
+  wordEl.textContent = q.word;
+  readingEl.textContent = q.reading;
+  qNoEl.textContent = `第${index + 1}問`;
+  totalNoEl.textContent = `全${questions.length}問`;
+  scorePill.textContent = `${correctCount} / ${index}`;
+  bar.style.width = `${(index / questions.length) * 100}%`;
+
+  const wrongs = shuffle(WORDS.filter(w => w.meaning !== q.meaning)).slice(0, 3);
+  const options = shuffle([q, ...wrongs]);
+  choicesEl.innerHTML = "";
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = opt.meaning;
+    btn.onclick = () => answer(btn, opt.meaning === q.meaning);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function answer(btn, isCorrect) {
+  if (answered) return;
+  answered = true;
+  const q = questions[index];
+  const buttons = [...document.querySelectorAll(".choice")];
+  buttons.forEach(b => {
+    if (b.textContent === q.meaning) b.classList.add("correct");
+  });
+  if (isCorrect) {
+    correctCount++;
+    feedbackEl.textContent = "正解！";
+    feedbackEl.style.color = "#16a34a";
+  } else {
+    btn.classList.add("wrong");
+    missed.push(q);
+    feedbackEl.textContent = "不正解";
+    feedbackEl.style.color = "#dc2626";
+  }
+  scorePill.textContent = `${correctCount} / ${index + 1}`;
+}
+
+function nextQuestion() {
+  if (!answered) {
+    feedbackEl.textContent = "先に選択してください";
+    feedbackEl.style.color = "#6b7280";
+    return;
+  }
+  index++;
+  if (index >= questions.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showResult() {
+  quizCard.classList.add("hidden");
+  resultCard.classList.remove("hidden");
+  const percent = Math.round((correctCount / questions.length) * 100);
+  resultText.textContent = `${percent}%`;
+  resultSub.textContent = `${questions.length}問中 ${correctCount}問正解`;
+  bar.style.width = "100%";
+  reviewList.innerHTML = "";
+  if (missed.length === 0) {
+    reviewList.innerHTML = '<div class="review-item">全問正解です。</div>';
+  } else {
+    missed.forEach(w => {
+      const div = document.createElement("div");
+      div.className = "review-item";
+      div.innerHTML = `<b>${w.word}</b>（${w.reading}）<br>${w.meaning}`;
+      reviewList.appendChild(div);
+    });
+  }
+}
+
+nextBtn.onclick = nextQuestion;
+restartBtn.onclick = () => makeQuestions();
+document.getElementById("againBtn").onclick = () => makeQuestions();
+document.getElementById("reviewBtn").onclick = () => {
+  if (missed.length > 0) makeQuestions(missed);
+};
+makeQuestions();
+</script>
+</body>
+</html>
